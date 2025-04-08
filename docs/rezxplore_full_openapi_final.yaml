@@ -1,0 +1,444 @@
+openapi: 3.1.0
+info:
+  title: RezXplore Distribution API
+  version: 1.0.0
+  description: Complete API hub for distributing activities, experiences, and hospitality
+    content.
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        product_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price_from:
+          type: number
+        activity_id:
+          type: string
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        address:
+          $ref: '#/components/schemas/Address'
+        rateplans:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatePlan'
+        cancellation_policy:
+          $ref: '#/components/schemas/CancellationPolicy'
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+      required:
+      - product_id
+      - name
+      - activity_id
+    RatePlan:
+      type: object
+      properties:
+        rateplan_id:
+          type: string
+        rate_type:
+          type: string
+        unit:
+          type: string
+        unit_type:
+          type: string
+        value:
+          type: number
+        currency:
+          type: string
+    CancellationPolicy:
+      type: object
+      properties:
+        cancellation_policy_id:
+          type: string
+        policy_type:
+          type: string
+        policy_from:
+          type: string
+          format: date
+        policy_to:
+          type: string
+          format: date
+        policy_value:
+          type: number
+        cancellation_note:
+          type: string
+        cancellation_fee:
+          type: number
+        cancellation_status:
+          type: string
+    Review:
+      type: object
+      properties:
+        review_id:
+          type: string
+        title:
+          type: string
+        comment:
+          type: string
+        rating:
+          type: number
+        language:
+          type: string
+        date:
+          type: string
+          format: date
+    Media:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        caption:
+          type: string
+        type:
+          type: string
+          enum:
+          - image
+          - video
+        featured:
+          type: boolean
+    Address:
+      type: object
+      properties:
+        street:
+          type: string
+        postal_code:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        geo_code:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+        total_records:
+          type: integer
+        total_activities:
+          type: integer
+    Activity:
+      type: object
+      properties:
+        activity_id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        themes:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+      required:
+      - activity_id
+      - name
+    AvailabilityRequest:
+      type: object
+      properties:
+        location_id:
+          type: integer
+        category_id:
+          type: integer
+        product_type_id:
+          type: integer
+        program_date:
+          type: object
+          properties:
+            from_date:
+              type: string
+              format: date
+            to_date:
+              type: string
+              format: date
+        product_id:
+          type: string
+        search_keywords:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    AvailabilityResponse:
+      type: object
+      properties:
+        product_id:
+          type: string
+        availability:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              timeslot:
+                type: string
+              available:
+                type: boolean
+              price:
+                type: object
+                properties:
+                  amount:
+                    type: number
+                  currency:
+                    type: string
+    BookingRequest:
+      type: object
+      properties:
+        product_id:
+          type: string
+        date:
+          type: string
+          format: date
+        timeslot:
+          type: string
+        guests:
+          type: integer
+        customer_info:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+    BookingResponse:
+      type: object
+      properties:
+        booking_id:
+          type: string
+        status:
+          type: string
+        confirmation_code:
+          type: string
+    CancellationRequest:
+      type: object
+      properties:
+        booking_id:
+          type: string
+        reason:
+          type: string
+    CancellationResponse:
+      type: object
+      properties:
+        cancellation_id:
+          type: string
+        status:
+          type: string
+        refunded_amount:
+          type: number
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of results to return
+      schema:
+        type: integer
+        default: 20
+    offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      schema:
+        type: integer
+        default: 0
+  responses:
+    UnauthorizedError:
+      description: API key is missing or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    ForbiddenError:
+      description: You do not have access to this resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+paths:
+  /products:
+    get:
+      summary: List products
+      description: Retrieve a list of available products with pagination.
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A list of products
+          headers:
+            X-RateLimit-Limit:
+              description: Max allowed requests
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: Remaining requests
+              schema:
+                type: integer
+            Retry-After:
+              description: Time to retry after limit
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /product/{id}:
+    get:
+      summary: Get product details
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /activities:
+    get:
+      summary: List activities
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - $ref: '#/components/parameters/limit'
+      - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A list of activity types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /availability:
+    post:
+      summary: Check availability
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityRequest'
+      responses:
+        '200':
+          description: Availability data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /bookings:
+    post:
+      summary: Create a booking
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '200':
+          description: Booking confirmation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /cancellations:
+    post:
+      summary: Cancel a booking
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancellationRequest'
+      responses:
+        '200':
+          description: Cancellation confirmation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancellationResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
