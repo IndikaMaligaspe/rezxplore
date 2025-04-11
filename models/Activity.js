@@ -1,19 +1,3 @@
-// // Activity model
-// module.exports = (sequelize, DataTypes) => {
-//   const Activity = sequelize.define("Activity", {
-//     activity_id: { type: DataTypes.STRING },
-//     name: { type: DataTypes.STRING },
-//     category: { type: DataTypes.STRING },
-//     themes: { type: DataTypes.JSON },
-//     tags: { type: DataTypes.JSON },
-//   });
-//   Activity.associate = (models) => {
-//     Activity.hasMany(models.Product);
-//   };
-
-//   return Activity;
-// };
-
 module.exports = (sequelize, DataTypes) => {
   const Activity = sequelize.define(
     "Activity",
